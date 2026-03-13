@@ -1,0 +1,14 @@
+{
+    "goal": "click nonexistent",
+    "extracted_ui_text_preview": "",
+    "origin_url": "https://example.com",
+    "origin_host": "example.com",
+    "origin_title_hint": "Example",
+    "origin_keywords": [],
+    "actions": [
+        {
+            "type": "click_text",
+            "target": "nonexistent_element"
+        }
+    ]
+}

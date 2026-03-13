@@ -1,3 +1,44 @@
-.env
-.venv/
+# Python
 __pycache__/
+*.pyc
+*.pyo
+.venv/
+my_pro_chall/
+
+# Node.js
+node_modules/
+dist/
+.cache/
+
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Drizzle
+drizzle/migrations/
+
+# Screenshots & runs
+runs/
+*.jpg
+*.png
+!screen.jpg
+
+# Logs
+*.log

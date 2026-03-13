@@ -1,0 +1,34 @@
+{
+  "goal": "open settings",
+  "extracted_ui_text_preview": "xt = 6\nFIM SEP token ‘<|file_sep|>\"\nE0G token '<[endoftext|>'\nE0G token *<|im_end|>\nE0G token ‘<|fim_pad|>\"\nE0G token ‘<|repo_name|>\"\nE0G token '<|File_sep|>\nnfo: max token Length = 256\nload_tensors: loading model tensors, this can take a while... (nmap = false:\nCPU model buffer size =\nconstructing Llama_context\nload_tensors: 93.69 MiB\n‘Uama_contex\nLlama_context: n_seq_max\nLlama_context: n_ctx =\nLlama_context: n_ctx_seq\nLlama_context: n_batch\nUlama_context: n_ubatch\nLlama_context: causal_attn\nLlama_contex",
+  "actions": [
+    {
+      "type": "click_text",
+      "target": "Menu",
+      "text": null,
+      "key": null,
+      "url": null
+    },
+    {
+      "type": "wait",
+      "target": "1s",
+      "text": null,
+      "key": null,
+      "url": null
+    },
+    {
+      "type": "click_text",
+      "target": "Settings",
+      "text": null,
+      "key": null,
+      "url": null
+    },
+    {
+      "type": "wait",
+      "target": "1s",
+      "text": null,
+      "key": null,
+      "url": null
+    }
+  ]
+}
