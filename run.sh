@@ -14,13 +14,23 @@
 
 set -euo pipefail
 
-VENV_DIR="${VENV_PATH:-./my_pro_chall}"
+VENV_DIR="${VENV_PATH:-.venv}"
 
-# ── Activate Python venv ─────────────────────────────────────────────
+# ── Create Python venv if it doesn't exist ───────────────────────────
+if [ ! -d "${VENV_DIR}" ]; then
+    echo "📦 Creating Python virtual environment at ${VENV_DIR}..."
+    python3 -m venv "${VENV_DIR}"
+    echo "✅ Virtual environment created successfully!"
+fi
+
+# ── Activate Python venv ��────────────────────────────────────────────
 if [ -f "${VENV_DIR}/bin/activate" ]; then
     source "${VENV_DIR}/bin/activate"
 elif [ -f "${VENV_DIR}/Scripts/activate" ]; then
     source "${VENV_DIR}/Scripts/activate"
+else
+    echo "ERROR: Failed to find activation script in ${VENV_DIR}"
+    exit 1
 fi
 
 echo ""
