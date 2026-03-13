@@ -1,5 +1,11 @@
 # Phoenix Shopping Sniper 🎯
 
+
+![photo_2026-03-12_18-01-09](https://github.com/user-attachments/assets/49a45465-a95a-4676-b0e6-c168400124eb)
+
+
+
+
 > AI-powered shopping price comparison using **Google Gemini** and autonomous browser automation — built for the **Google Gemini Live Agent Challenge**.
 
 ## ✨ Features
