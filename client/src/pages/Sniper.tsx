@@ -124,6 +124,8 @@ export default function Sniper() {
   const refineQueryMutation = trpc.sniper.refineQuery.useMutation();
   const searchMutation = trpc.sniper.search.useMutation();
   const rerunMutation = trpc.sniper.rerunSearch.useMutation();
+  const clearHistoryMutation = trpc.sniper.clearHistory.useMutation();
+  const abortSearchMutation = trpc.sniper.abortSearch.useMutation();
   const statsQuery = trpc.sniper.getStats.useQuery(undefined, {
     refetchInterval: 30000,
   });
@@ -428,10 +430,10 @@ export default function Sniper() {
                 disabled={isSearching || questionnaireStatus !== 'idle'}
               />
             </div>
-            <div className="sm:col-span-2 flex items-end">
+            <div className="sm:col-span-2 flex items-end gap-2">
               <button
                 id="search-button"
-                className="btn-phoenix w-full"
+                className="btn-phoenix flex-1"
                 onClick={handleSearch}
                 disabled={questionnaireStatus !== 'idle' || !productName.trim()}
               >
@@ -444,6 +446,25 @@ export default function Sniper() {
                   <>🎯 Snipe</>
                 )}
               </button>
+              {questionnaireStatus !== 'idle' && (
+                <button
+                  className="p-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all flex items-center justify-center w-12 shrink-0"
+                  onClick={async () => {
+                     try {
+                       await abortSearchMutation.mutateAsync();
+                       setIsSearching(false);
+                       setQuestionnaireStatus('idle');
+                       setSearchProgress("");
+                       setError("Search cancelled by user.");
+                     } catch (err) {
+                       console.error("Failed to abort search", err);
+                     }
+                  }}
+                  title="Cancel Search"
+                >
+                  ✖
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -1131,9 +1152,24 @@ export default function Sniper() {
         {/* Search History */}
         {history && history.length > 0 && (
           <section className="glass-card p-6 sm:p-8 animate-fade-in">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <span className="text-sniper-400">📜</span> Search History
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <span className="text-sniper-400">📜</span> Search History
+              </h3>
+              <button
+                onClick={async () => {
+                  if (confirm("Clear search history?")) {
+                    await clearHistoryMutation.mutateAsync();
+                    historyQuery.refetch();
+                    statsQuery.refetch();
+                  }
+                }}
+                className="p-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all flex items-center justify-center text-xs"
+                title="Clear History"
+              >
+                🗑️ Clear
+              </button>
+            </div>
             <div className="space-y-3">
               {history.map((s: any) => (
                 <div

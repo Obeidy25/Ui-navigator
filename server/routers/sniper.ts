@@ -20,8 +20,9 @@ import {
   getUserStatistics,
   updateUserStatistics,
   getRecentExactSearch,
+  clearUserSearches,
 } from "../db.js";
-import { searchAllSites } from "../phoenix_engine.js";
+import { searchAllSites, killAllRunningSearches } from "../phoenix_engine.js";
 import {
   analyzeProducts,
   generateSemanticAlternatives,
@@ -334,6 +335,36 @@ export const sniperRouter = router({
       } catch (err: any) {
         log("ERROR", `getHistory failed: ${err.message}`);
         return [];
+      }
+    }),
+
+  /**
+   * clearHistory — Clear user's search history.
+   */
+  clearHistory: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        // Stop any running searches before clearing history
+        killAllRunningSearches();
+        await clearUserSearches(ctx.userId);
+        return { success: true };
+      } catch (err: any) {
+        log("ERROR", `clearHistory failed: ${err.message}`);
+        throw new Error("Failed to clear history");
+      }
+    }),
+
+  /**
+   * abortSearch — Stop all currently running search processes.
+   */
+  abortSearch: protectedProcedure
+    .mutation(async () => {
+      try {
+        killAllRunningSearches();
+        return { success: true };
+      } catch (err: any) {
+        log("ERROR", `abortSearch failed: ${err.message}`);
+        throw new Error("Failed to abort searches");
       }
     }),
 

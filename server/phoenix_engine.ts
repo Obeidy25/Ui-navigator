@@ -34,6 +34,24 @@ const MAX_ATTEMPTS = 5;
 // Track attempts per site for circuit breaker
 const siteAttempts: Record<string, number> = {};
 
+// Track active processes for cancellation
+const activeProcesses = new Set<ChildProcess>();
+
+export function killAllRunningSearches() {
+  log("INFO", `Killing ${activeProcesses.size} running search processes...`);
+  for (const proc of activeProcesses) {
+    if (process.platform === "win32" && proc.pid) {
+      try { execSync(`taskkill /PID ${proc.pid} /F /T`, { stdio: "ignore" }); } catch {}
+    } else {
+      try {
+        proc.kill("SIGTERM");
+        setTimeout(() => { try { proc.kill("SIGKILL"); } catch { } }, 3000);
+      } catch {}
+    }
+  }
+  activeProcesses.clear();
+}
+
 // ── Site URLs ───────────────────────────────────────────────────────
 const SITE_CONFIGS: Record<
   string,
@@ -335,6 +353,8 @@ function runPhoenixSubprocess(
       }
     );
 
+    activeProcesses.add(proc);
+
     let stdout = "";
     let stderr = "";
 
@@ -362,6 +382,7 @@ function runPhoenixSubprocess(
     }, TIMEOUT_MS);
 
     proc.on("close", (code: number | null) => {
+      activeProcesses.delete(proc);
       clearTimeout(timer);
 
       // Clean up plan file
@@ -397,6 +418,7 @@ function runPhoenixSubprocess(
     });
 
     proc.on("error", (err: Error) => {
+      activeProcesses.delete(proc);
       clearTimeout(timer);
       try { fs.unlinkSync(planPath); } catch { /* ignore */ }
       reject(new Error(`Failed to spawn Phoenix: ${err.message}`));

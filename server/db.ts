@@ -243,6 +243,34 @@ export async function getUserSearches(userId: string = "default", limit = 20) {
   }
 }
 
+/** Clear search history for a user. */
+export async function clearUserSearches(userId: string = "default") {
+  try {
+    // 1. Delete all results belonging to this user's searches first (due to FK)
+    const userSearchIds = db
+      .select({ id: searches.id })
+      .from(searches)
+      .where(eq(searches.userId, userId))
+      .all()
+      .map(s => s.id);
+
+    if (userSearchIds.length > 0) {
+      db.delete(searchResults)
+        .where(sql`${searchResults.searchId} IN (${sql.join(userSearchIds, sql`, `)})`)
+        .run();
+    }
+
+    // 2. Now delete the searches
+    db.delete(searches)
+      .where(eq(searches.userId, userId))
+      .run();
+
+    log("INFO", `Cleared search history and results for user "${userId}"`);
+  } catch (err) {
+    log("ERROR", `clearUserSearches failed: ${err}`);
+  }
+}
+
 /** Get or create user statistics. */
 export async function getUserStatistics(userId: string = "default") {
   try {
