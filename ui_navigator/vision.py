@@ -7,6 +7,7 @@ Wraps Gemini API calls with domain-specific error handling.
 import logging
 import json
 import asyncio
+import os
 from google import genai
 from PIL import Image
 
@@ -17,7 +18,8 @@ logger = logging.getLogger("ui_navigator.vision")
 
 async def analyze_image(image_path: str, goal: str, *, api_key: str) -> str:
     """Analyze a screenshot with Gemini Vision (Async)."""
-    if not api_key:
+    use_vertex = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+    if not use_vertex and not api_key:
         raise ScorerError(
             "GOOGLE_API_KEY is required. Set it as an environment variable, "
             "in a .env file, or provide it when prompted."
@@ -31,7 +33,20 @@ async def analyze_image(image_path: str, goal: str, *, api_key: str) -> str:
 
 
 def _analyze_image_sync(image_path: str, goal: str, api_key: str) -> str:
-    client = genai.Client(api_key=api_key)
+    use_vertex = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+    if use_vertex:
+        # ══════════════════════════════════════════════════════════════════
+        # [HACKATHON PROOF: GOOGLE CLOUD VERTEX AI]
+        # Direct API calls to Vertex AI endpoints for Vision analysis.
+        # ══════════════════════════════════════════════════════════════════
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+        if not project_id:
+            raise ScorerError("GOOGLE_CLOUD_PROJECT is required for Vertex AI.")
+        client = genai.Client(vertexai=True, project=project_id, location=location)
+    else:
+        client = genai.Client(api_key=api_key)
+
     image = Image.open(image_path)
 
     prompt = f"""
@@ -54,7 +69,8 @@ Be precise and structured.
 
 async def generate_zero_shot_plan(image_path: str, goal: str, *, api_key: str) -> Plan:
     """Generate a structured Plan from a screenshot using Gemini Vision (Async)."""
-    if not api_key:
+    use_vertex = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+    if not use_vertex and not api_key:
         raise ScorerError("GOOGLE_API_KEY required for zero-shot planning.")
 
     try:
@@ -81,7 +97,16 @@ async def generate_zero_shot_plan(image_path: str, goal: str, *, api_key: str) -
 
 
 def _generate_plan_sync(image_path: str, goal: str, api_key: str) -> str:
-    client = genai.Client(api_key=api_key)
+    use_vertex = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+    if use_vertex:
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+        if not project_id:
+            raise ScorerError("GOOGLE_CLOUD_PROJECT is required for Vertex AI.")
+        client = genai.Client(vertexai=True, project=project_id, location=location)
+    else:
+        client = genai.Client(api_key=api_key)
+
     image = Image.open(image_path)
 
     prompt = f"""

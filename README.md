@@ -109,6 +109,20 @@
 4. **Predictive Price Forecasting AI**: Analyzes historical market data to predict flash sales, advising the user: *"Wait 3 days, probability of a 15% discount is very high!"*
 5. **Cross-Border "Smuggler" Routing API**: The AI autonomously calculates the absolute cheapest shipping pathways utilizing third-party global forwarders instead of direct shipping.
 
+## ☁️ Google Cloud Integration (Hackathon Proof)
+
+As required by the **Google Gemini Live Agent Challenge**, this project demonstrates deep integration with Google Cloud Services.
+
+- **Proof of GCP/Vertex AI Usage**: See [ui_navigator/gemini.py](file:///ui_navigator/gemini.py) and [ui_navigator/vision.py](file:///ui_navigator/vision.py).
+- **Core Engine**: Phoenix integrates directly with **Vertex AI endpoints** (via the `google-genai` SDK) when the `USE_VERTEX_AI=true` flag is set.
+- **Storage**: Integrates with **Google Cloud Storage (GCS)** for persistent logs and session data (see `server/storage.ts`).
+- **GCP Native Calls**: The project utilizes standard Google Cloud SDKs for authentication, project-scoping, and high-performance inference on Vertex AI.
+
+To run using Vertex AI:
+1. Set `USE_VERTEX_AI=true` in `.env`.
+2. Provide `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION`.
+3. The engine will route all LLM and Vision requests through Google Cloud Vertex AI infrastructure.
+
 ## 📜 License
 
 MIT

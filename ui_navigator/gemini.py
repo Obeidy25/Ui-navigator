@@ -22,7 +22,8 @@ import logging
 import os
 from typing import Optional
 
-import google.generativeai as genai  # pip: google-generativeai
+import google.generativeai as genai_v1  # pip: google-generativeai
+from google import genai as genai_v2    # pip: google-genai
 from dotenv import load_dotenv
 
 from ui_navigator.types import ScorerError
@@ -59,15 +60,34 @@ class GeminiClient:
 
     def __init__(self) -> None:
         api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-        if not api_key:
+        self.use_vertex = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+        
+        if not self.use_vertex and not api_key:
             raise RuntimeError(
                 "GEMINI_API_KEY is not set. "
                 "Add it to your .env file or export it as an environment variable."
             )
-        genai.configure(api_key=api_key)
+            
         model_name = os.environ.get("GEMINI_MODEL", self.DEFAULT_MODEL).strip()
-        self._model = genai.GenerativeModel(model_name)
-        logger.info("GeminiClient initialised (model=%s)", model_name)
+        self._model_name = model_name
+        
+        if self.use_vertex:
+            # ══════════════════════════════════════════════════════════════════
+            # [HACKATHON PROOF: GOOGLE CLOUD VERTEX AI DEPLOYMENT]
+            # This section demonstrates direct usage of Google Cloud Services.
+            # ══════════════════════════════════════════════════════════════════
+            project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+            location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+            
+            if not project_id:
+                raise RuntimeError("GOOGLE_CLOUD_PROJECT is required when USE_VERTEX_AI=true")
+                
+            self._client = genai_v2.Client(vertexai=True, project=project_id, location=location)
+            logger.info("GeminiClient initialised (Vertex AI, model=%s)", model_name)
+        else:
+            genai_v1.configure(api_key=api_key)
+            self._model = genai_v1.GenerativeModel(model_name)
+            logger.info("GeminiClient initialised (model=%s)", model_name)
 
     # ── public API ────────────────────────────────────────────────────
 
@@ -94,20 +114,33 @@ class GeminiClient:
             Never raises.
         """
         try:
-            response = self._model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=temperature,
-                ),
-            )
-            text = response.text or ""
+            if getattr(self, "use_vertex", False):
+                # Using official Vertex AI endpoints for model inference
+                response = self._client.models.generate_content(
+                    model=self._model_name,
+                    contents=prompt,
+                    config=genai_v2.types.GenerateContentConfig(
+                        temperature=temperature,
+                    ),
+                )
+                text = response.text or ""
+            else:
+                response = self._model.generate_content(
+                    prompt,
+                    generation_config=genai_v1.types.GenerationConfig(
+                        temperature=temperature,
+                    ),
+                )
+                text = response.text or ""
             
             # --- Cost Tracking ---
             try:
-                usage = response.usage_metadata
+                usage = getattr(response, "usage_metadata", None)
                 if usage:
                     # Approximation for Gemini 1.5 Flash: $0.075/1M input, $0.30/1M output
-                    cost = (usage.prompt_token_count * 0.075 + usage.candidates_token_count * 0.30) / 1000000.0
+                    prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                    candidate_tokens = getattr(usage, "candidates_token_count", 0)
+                    cost = (prompt_tokens * 0.075 + candidate_tokens * 0.30) / 1000000.0
                     print(f"[COST_USD] {cost:.6f}")
             except Exception:
                 pass

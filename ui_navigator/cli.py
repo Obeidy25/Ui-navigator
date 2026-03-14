@@ -260,7 +260,8 @@ def main() -> int:
         from ui_navigator.vision import analyze_image
 
         try:
-            result = analyze_image(args.image, args.goal, api_key=api_key)
+            # analyze_image is async and must be run in an event loop
+            result = asyncio.run(analyze_image(args.image, args.goal, api_key=api_key))
         except Exception as exc:
             print(f"Analysis error: {exc}", file=sys.stderr)
             return 1
